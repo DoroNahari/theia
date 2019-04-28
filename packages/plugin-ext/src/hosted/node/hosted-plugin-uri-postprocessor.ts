@@ -29,3 +29,7 @@ export const HostedPluginUriPostProcessorSymbolName = 'HostedPluginUriPostProces
 export interface HostedPluginUriPostProcessor {
     processUri(uri: URI): Promise<URI>;
 }
+
+export interface HostedPluginUriPostProcessor {
+    processOptions(options: object): Promise<object>;
+}

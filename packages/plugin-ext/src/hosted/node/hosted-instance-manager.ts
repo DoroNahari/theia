@@ -101,6 +101,7 @@ export abstract class AbstractHostedInstanceManager implements HostedInstanceMan
     protected isPluginRunnig: boolean = false;
     protected instanceUri: URI;
     protected pluginUri: URI;
+    protected instanceOptions: object;
 
     @inject(HostedPluginSupport)
     protected readonly hostedPluginSupport: HostedPluginSupport;
@@ -142,7 +143,10 @@ export abstract class AbstractHostedInstanceManager implements HostedInstanceMan
         this.instanceUri = await this.postProcessInstanceUri(
             await this.runHostedPluginTheiaInstance(command, processOptions));
         this.pluginUri = pluginUri;
-
+        this.instanceOptions = {
+            followRedirect: false
+        };
+        this.instanceOptions = await this.postProcessInstanceOptions(this.instanceOptions);
         await this.checkInstanceUriReady();
 
         return this.instanceUri;
@@ -209,10 +213,8 @@ export abstract class AbstractHostedInstanceManager implements HostedInstanceMan
      */
     private async ping(): Promise<boolean> {
         // disable redirect to grab the release
-        const options = {
-            followRedirect: false
-        };
 
+        const options = this.instanceOptions;
         return new Promise<boolean>((resolve, reject) => {
             const url = this.instanceUri.toString();
             request.head(url, options).on('response', res => {
@@ -281,6 +283,10 @@ export abstract class AbstractHostedInstanceManager implements HostedInstanceMan
 
     protected async postProcessInstanceUri(uri: URI): Promise<URI> {
         return uri;
+    }
+
+    protected async postProcessInstanceOptions(options: object): Promise<object> {
+        return options;
     }
 
     protected runHostedPluginTheiaInstance(command: string[], options: cp.SpawnOptions): Promise<URI> {
@@ -355,6 +361,13 @@ export class NodeHostedPluginRunner extends AbstractHostedInstanceManager {
             uri = await uriPostProcessor.processUri(uri);
         }
         return uri;
+    }
+
+    protected async postProcessInstanceOptions(options: object): Promise<object> {
+        for (const uriPostProcessor of this.uriPostProcessors.getContributions()) {
+            options = await uriPostProcessor.processOptions(options);
+        }
+        return options;
     }
 
     protected async getStartCommand(port?: number, config?: DebugConfiguration): Promise<string[]> {
