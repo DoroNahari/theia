@@ -66,6 +66,7 @@
     "next:publish": "lerna publish --exact --canary=next --npm-tag=next --yes",
     "publish:check": "node scripts/check-publish.js"
   },
+  
   "workspaces": [
     "dev-packages/*",
     "packages/*",
